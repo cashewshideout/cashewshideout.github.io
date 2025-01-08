@@ -1,0 +1,41 @@
+name: Backend
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.main.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      LOCATION: eastus
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0.x' # Specify the .NET version you are using
+
+      - name: Publish project
+        working-directory: backend/api
+        run: dotnet publish --configuration Release --output ./publish
+
+      # - name: Run tests
+      #   working-directory: backend/tests
+      #   run: dotnet test --configuration Release
+
+      - name: Deploy to Azure Function
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ secrets.APPNAME }}
+          package: backend/api/publish
+          publish-profile: ${{ secrets.AZURE_FUNCTION_APP_PUBLISH_PROFILE }}
